@@ -19,6 +19,21 @@ PROMPT_GENERATION_IMAGE_PROMPT="I need a motif for an AI image generation task. 
 PROMPT_GENERATION_SLOGAN_PROMPT="Please suggest $NUMBER_OF_SUGGESTIONS creative and unique hacker or programmer or sci-fi slogans. The text will be displayed at the top of a newly started terminal. Express the slogans in at most five words."
 PROMPT_GENERATION_STYLE_PROMPT="Please suggest $NUMBER_OF_SUGGESTIONS unique art or fashion styles. Be creative. Express the styles in one word each."
 
+link_random_existing_image() {
+    # shellcheck disable=SC2207
+    local existing_images=($(ls "$IMAGE_FOLDER/design_*.png" 2>/dev/null))
+    if [[ ${#existing_images[@]} -gt 0 ]]; then
+      # Pick a random existing image
+      random_image=${existing_images[$RANDOM % ${#existing_images[@]}]}
+      ln -sf "$random_image" "$IMAGE_FOLDER/latest.png"
+    fi
+}
+
+log() {
+  local message="$1"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - $message" >> /tmp/frieze.log
+}
+
 generate_banner_image() {
   # Check that magick is installed
   local magick_command=magick
@@ -57,47 +72,54 @@ generate_banner_image() {
   local prompt
   prompt=$(eval echo "${PROMPT_TEMPLATES[$index]}")
 
+  log "Generated prompt: $prompt"
+
   local image_url
   image_url=$(get_image_url "$prompt")
 
   # If we hit the rate limit, pick a random existing image
   if [[ -z "$image_url" || "$image_url" == "null" ]]; then
-    # shellcheck disable=SC2207
-    local existing_images=($(ls "$IMAGE_FOLDER/design_*.png" 2>/dev/null))
-    if [[ ${#existing_images[@]} -gt 0 ]]; then
-      # Pick a random existing image
-      random_image=${existing_images[$RANDOM % ${#existing_images[@]}]}
-      ln -sf "$random_image" "$IMAGE_FOLDER/latest.png"
-    fi
-    exit 0
+    log "Image URL is empty or null."
+    link_random_existing_image
   fi
 
   # Download the image
   local prompt_as_filename
   prompt_as_filename=$(echo "$prompt" | tr -d '[:punct:]' | tr ' ' '_')
   local image_name
-  # image_name=design_$(date +%Y%m%d_%H%M%S).png
   image_name=design_"$prompt_as_filename".png
   curl -s -o "$image_name" "$image_url"
-  mkdir -p "$IMAGE_FOLDER"
-  "$magick_command" "$image_name" -fuzz 10% -trim +repage "$IMAGE_FOLDER/$image_name"
-  ln -sf "$IMAGE_FOLDER/$image_name" "$IMAGE_FOLDER/latest.png"
+  # Check that the image was downloaded and is a valid image
+  if ! "$magick_command" identify "$image_name" &> /dev/null; then
+    log "Invalid image downloaded from: $image_url"
+    link_random_existing_image
+  else
+    mkdir -p "$IMAGE_FOLDER"
+    "$magick_command" "$image_name" -fuzz 10% -trim +repage "$IMAGE_FOLDER/$image_name"
+    ln -sf "$IMAGE_FOLDER/$image_name" "$IMAGE_FOLDER/latest.png"
+  fi
 }
 
 display_banner_image() {
-  # Check that tiv is installed
-  if ! command -v tiv &> /dev/null; then
-    echo "tiv is not installed. Install it from https://github.com/stefanhaustein/TerminalImageViewer?tab=readme-ov-file"
-    return 1
-  fi
-
   local height=$DEFAULT_HEIGHT
   local width=$COLUMNS
   ## if no COLUMNS is set, default to 80
   if [[ -z "$width" ]]; then
     width=$DEFAULT_WIDTH
   fi
-  tiv -w "$width" -h "$height" "$IMAGE_FOLDER/latest.png"
+
+  # Check if we are running in WEZTERM
+  if [[ -n "$WEZTERM_EXECUTABLE" ]]; then
+    # We are running in WEZTERM, use its image display capabilities
+    wezterm imgcat --height "$height" "$IMAGE_FOLDER/latest.png"
+  else
+    # Check that tiv is installed
+    if ! command -v tiv &> /dev/null; then
+      echo "tiv is not installed. Install it from https://github.com/stefanhaustein/TerminalImageViewer?tab=readme-ov-file"
+      return 1
+    fi
+    tiv -w "$width" -h "$height" "$IMAGE_FOLDER/latest.png"
+  fi
 }
 
 if [[ "$COMMAND" == "generate" ]]; then
