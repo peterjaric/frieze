@@ -2,6 +2,10 @@
 
 Frieze is a (mostly silly) shell tool for generating and displaying AI-generated banner images and slogans in your terminal.
 
+## Screenshot
+
+![screenshot](screenshot.png){ width=800 }
+
 ## Setup
 
 ### Prerequisites
@@ -32,7 +36,7 @@ Run the script with one of the following commands:
 - **Generate a new banner image:**
 
   ```sh
-  ./frieze.sh generate
+  frieze.sh generate
   ```
 
   This will create a new AI-generated image and save it to the image folder. The script returns at once, but continues creating the image in the background.
@@ -40,8 +44,10 @@ Run the script with one of the following commands:
 - **Display the latest banner image in your terminal:**
 
   ```sh
-  ./frieze.sh display
+  frieze.sh display
   ```
+
+You can put calls to these commands in for examnple your .zshrc or .bashrc to have a new banner image generated and displayed each time you open a terminal.
 
 ## Changing the backing APIs
 
