@@ -101,17 +101,19 @@ generate_banner_image() {
 }
 
 display_banner_image() {
+  local resolution=$1
   local height=$DEFAULT_HEIGHT
+
+  read -r LINES COLUMNS <<< "$(stty size)"
+
   local width=$COLUMNS
-  ## if no COLUMNS is set, default to 80
   if [[ -z "$width" ]]; then
     width=$DEFAULT_WIDTH
   fi
 
-  # Check if we are running in WEZTERM
-  if [[ -n "$WEZTERM_EXECUTABLE" ]]; then
-    # We are running in WEZTERM, use its image display capabilities
-    wezterm imgcat --height "$height" "$IMAGE_FOLDER/latest.png"
+  # Check if we should try to display high def images and if so, if we are running in WEZTERM
+  if [[ "$resolution" == "high" && -n "$WEZTERM_EXECUTABLE" ]]; then
+    wezterm imgcat --width "$width" "$IMAGE_FOLDER/latest.png"
   else
     # Check that tiv is installed
     if ! command -v tiv &> /dev/null; then
@@ -126,7 +128,8 @@ if [[ "$COMMAND" == "generate" ]]; then
   set +m # Disable job control, so that the generate command does not produce job control messages.
   generate_banner_image &
 elif [[ "$COMMAND" == "display" ]]; then
-  display_banner_image
+  resolution=$2
+  display_banner_image "$resolution"
 else
   echo "Usage: $0 generate|display"
   exit 1

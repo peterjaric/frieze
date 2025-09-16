@@ -47,13 +47,19 @@ Run the script with one of the following commands:
   frieze.sh display
   ```
 
+Or if your terminal supports direct image display (currently only WezTerm supported), you can request high resolution display:
+
+  ```sh
+  frieze.sh display high
+  ```
+
 You can put calls to these commands in for examnple your .zshrc or .bashrc to have a new banner image generated and displayed each time you open a terminal.
 
 ## Changing the backing APIs
 
-It is possible to change which AI APIs are used. To change which text generation API is used, create a new script modeled on mistral.sh, but using your preferred API. Then change the TEXT_SCRIPT variable in config.env to point to your new script. Make sure any required KEY variables are set in your .env file.
+It is possible to change which AI APIs are used. To change which text generation API is used, create a new script modeled on for example mistral.sh, but using your preferred API. Then change the TEXT_SCRIPT variable in config.env to point to your new script. Make sure any required KEY variables are set in your .env file.
 
-The same goes for the image generation API - create a new script modeled on imagerouter.sh and change the IMAGE_SCRIPT variable in config.env.
+The same goes for the image generation API - create a new script modeled on for example imagerouter.sh and change the IMAGE_SCRIPT variable in config.env.
 
 ## License
 
