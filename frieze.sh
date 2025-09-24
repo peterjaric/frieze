@@ -16,8 +16,8 @@ source "$SCRIPT_DIR/$IMAGE_SCRIPT"
 
 NUMBER_OF_SUGGESTIONS=five
 PROMPT_GENERATION_IMAGE_PROMPT="I need a motif for an AI image generation task. The image will be displayed at the top of a newly started terminal. Please provide $NUMBER_OF_SUGGESTIONS creative and unique motifs which can be used to generate interesting images in an array. Express the motifs in at most five words."
-PROMPT_GENERATION_SLOGAN_PROMPT="Please suggest $NUMBER_OF_SUGGESTIONS creative and unique hacker or programmer or sci-fi slogans. The text will be displayed at the top of a newly started terminal. Express the slogans in at most five words."
-PROMPT_GENERATION_STYLE_PROMPT="Please suggest $NUMBER_OF_SUGGESTIONS unique art or fashion styles. Be creative. Express the styles in one word each."
+PROMPT_GENERATION_SLOGAN_PROMPT="Please suggest $NUMBER_OF_SUGGESTIONS creative and unique hacker, programmer, sci-fi, tech, steam-punk or fantasy slogans. The text will be displayed at the top of a newly started terminal. Express the slogans in at most five words."
+PROMPT_GENERATION_STYLE_PROMPT="Please suggest $NUMBER_OF_SUGGESTIONS unique art or fashion styles. Be creative, don't fall back on the cliches. Express the styles in two to three words each."
 
 link_random_existing_image() {
     # shellcheck disable=SC2207
@@ -56,17 +56,17 @@ generate_banner_image() {
   local text
   # shellcheck disable=SC2034
   text=$(get_text "$PROMPT_GENERATION_SLOGAN_PROMPT")
+  log "Generated slogan: $text"
 
   local design
   # shellcheck disable=SC2034
   design=$(get_text "$PROMPT_GENERATION_IMAGE_PROMPT")
+  log "Generated design motif: $design"
 
   local style
   # shellcheck disable=SC2034
   style=$(get_text "$PROMPT_GENERATION_STYLE_PROMPT")
-
-  # shellcheck disable=SC2034
-  local common_text="on a black background in landscape orientation."
+  log "Generated style: $style"
 
   local index=$((RANDOM % ${#PROMPT_TEMPLATES[@]}))
   local prompt
@@ -76,6 +76,8 @@ generate_banner_image() {
 
   local image_url
   image_url=$(get_image_url "$prompt")
+
+  log "Image URL: $image_url"
 
   # If we hit the rate limit, pick a random existing image
   if [[ -z "$image_url" || "$image_url" == "null" ]]; then
@@ -98,13 +100,17 @@ generate_banner_image() {
     "$magick_command" "$image_name" -fuzz 10% -trim +repage "$IMAGE_FOLDER/$image_name"
     ln -sf "$IMAGE_FOLDER/$image_name" "$IMAGE_FOLDER/latest.png"
   fi
+
+  log "Image saved to $IMAGE_FOLDER/$image_name"
 }
 
 display_banner_image() {
   local resolution=$1
   local height=$DEFAULT_HEIGHT
 
-  read -r LINES COLUMNS <<< "$(stty size)"
+  # Make sure the terminal size variables are set, even when clearing the screen
+  # https://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window#comment78184101_563592
+  shopt -s checkwinsize; (:);
 
   local width=$COLUMNS
   if [[ -z "$width" ]]; then
