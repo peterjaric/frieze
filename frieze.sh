@@ -105,8 +105,13 @@ generate_banner_image() {
 }
 
 display_banner_image() {
-  local resolution=$1
+  local resolution="$1"
+  local filename="$2"
   local height=$DEFAULT_HEIGHT
+
+  if [[ -z "$filename" ]]; then
+    filename="$IMAGE_FOLDER/latest.png"
+  fi
 
   # Make sure the terminal size variables are set, even when clearing the screen
   # https://stackoverflow.com/questions/263890/how-do-i-find-the-width-height-of-a-terminal-window#comment78184101_563592
@@ -119,14 +124,14 @@ display_banner_image() {
 
   # Check if we should try to display high def images and if so, if we are running in WEZTERM
   if [[ "$resolution" == "high" && -n "$WEZTERM_EXECUTABLE" ]]; then
-    wezterm imgcat --width "$width" "$IMAGE_FOLDER/latest.png"
+    wezterm imgcat --width "$width" "$filename"
   else
     # Check that tiv is installed
     if ! command -v tiv &> /dev/null; then
       echo "tiv is not installed. Install it from https://github.com/stefanhaustein/TerminalImageViewer?tab=readme-ov-file"
       return 1
     fi
-    tiv -w "$width" -h "$height" "$IMAGE_FOLDER/latest.png"
+    tiv -w "$width" -h "$height" "$filename"
   fi
 }
 
@@ -149,11 +154,12 @@ if [[ "$COMMAND" == "generate" ]]; then
   set +m # Disable job control, so that the generate command does not produce job control messages.
   generate_banner_image &
 elif [[ "$COMMAND" == "display" ]]; then
-  resolution=$2
-  display_banner_image "$resolution"
+  resolution="$2"
+  filename="$3"
+  display_banner_image "$resolution" "$filename"
 elif [[ "$COMMAND" == "info" ]]; then
   print_info
 else
-  echo "Usage: $0 generate|display|info|usage"
+  echo "Usage: $0 generate|display [<low|high> [<filename>]]|info|usage"
   exit 1
 fi

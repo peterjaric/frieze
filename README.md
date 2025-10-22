@@ -57,6 +57,12 @@ The generated image is saved into the configured `IMAGE_FOLDER` (default `~/.fri
 
 If your terminal does not support direct image display, Frieze falls back to `tiv` (TerminalImageViewer). If `tiv` is missing the script will print installation instructions.
 
+- Display a specific image file:
+
+```sh
+./frieze.sh display low path/to/image.png
+```
+
 - Show configuration and image stats:
 
 ```sh
