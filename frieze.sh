@@ -130,13 +130,30 @@ display_banner_image() {
   fi
 }
 
+print_info() {
+  echo "Configuration:"
+  echo "  IMAGE_FOLDER        $IMAGE_FOLDER"
+  echo "  TEXT_SCRIPT         $TEXT_SCRIPT"
+  echo "  IMAGE_SCRIPT        $IMAGE_SCRIPT"
+  echo "Images:"
+  if [[ -f "$IMAGE_FOLDER/latest.png" ]]; then
+    echo -n "  Latest:             "
+    basename "$(readlink "$IMAGE_FOLDER/latest.png")"
+    echo "  Generated images:   $(ls "$IMAGE_FOLDER"/design_*.png 2>/dev/null | wc -l)"
+  else
+    echo "  No image generated yet."
+  fi
+}
+
 if [[ "$COMMAND" == "generate" ]]; then
   set +m # Disable job control, so that the generate command does not produce job control messages.
   generate_banner_image &
 elif [[ "$COMMAND" == "display" ]]; then
   resolution=$2
   display_banner_image "$resolution"
+elif [[ "$COMMAND" == "info" ]]; then
+  print_info
 else
-  echo "Usage: $0 generate|display"
+  echo "Usage: $0 generate|display|info|usage"
   exit 1
 fi
