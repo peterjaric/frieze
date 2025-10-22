@@ -1,13 +1,19 @@
 #!/bin/bash
 # shellcheck disable=SC1090
 
+# Exit immediately on various errors
+set -eo pipefail
+
 COMMAND=$1
 SCRIPT_DIR="$(dirname "$0")"
 
+# shellcheck disable=SC1091
 source "$SCRIPT_DIR/config.env"
 
-# Read API keys
-source "$KEY_FILE"
+# Read API keys if available
+if [[ -f "$KEY_FILE" ]]; then
+  source "$KEY_FILE"
+fi
 
 # Get API functions
 source "$SCRIPT_DIR/$TEXT_SCRIPT"
@@ -35,16 +41,6 @@ log() {
 }
 
 generate_banner_image() {
-  # Check that magick is installed
-  local magick_command=magick
-  if ! command -v magick &> /dev/null; then
-    magick_command=convert
-    if ! command -v convert &> /dev/null; then
-      echo "Neither magick nor convert is installed. Please install ImageMagick."
-      return 1
-    fi
-  fi
-
   # Check that jq is installed
   if ! command -v jq &> /dev/null; then
     echo "jq is not installed, please install it."
@@ -88,16 +84,16 @@ generate_banner_image() {
   # Download the image
   local prompt_as_filename
   prompt_as_filename=$(echo "$prompt" | tr -d '[:punct:]' | tr ' ' '_')
-  local image_name
-  image_name=design_"$prompt_as_filename".png
+  local image_name=design_"$prompt_as_filename".png
+
   curl -s -o "$image_name" "$image_url"
   # Check that the image was downloaded and is a valid image
-  if ! "$magick_command" identify "$image_name" &> /dev/null; then
+  if ! "$MAGICK_COMMAND" identify "$image_name" &> /dev/null; then
     log "Invalid image downloaded from: $image_url"
     link_random_existing_image
   else
     mkdir -p "$IMAGE_FOLDER"
-    "$magick_command" "$image_name" -fuzz 10% -trim +repage "$IMAGE_FOLDER/$image_name"
+    "$MAGICK_COMMAND" "$image_name" -fuzz 10% -trim +repage "$IMAGE_FOLDER/$image_name"
     ln -sf "$IMAGE_FOLDER/$image_name" "$IMAGE_FOLDER/latest.png"
   fi
 
@@ -111,6 +107,11 @@ display_banner_image() {
 
   if [[ -z "$filename" ]]; then
     filename="$IMAGE_FOLDER/latest.png"
+  fi
+
+  if [[ ! -f "$filename" ]]; then
+    echo "$0: Image file $filename does not exist. Run '$0 generate' first."
+    return 1
   fi
 
   # Make sure the terminal size variables are set, even when clearing the screen
@@ -149,6 +150,23 @@ print_info() {
     echo "  No image generated yet."
   fi
 }
+
+# Make sure everything is set up
+mkdir -p "$IMAGE_FOLDER"
+# Check that magick is installed
+MAGICK_COMMAND=magick
+if ! command -v magick &> /dev/null; then
+  MAGICK_COMMAND=convert
+  if ! command -v convert &> /dev/null; then
+    echo "Neither magick nor convert is installed. Please install ImageMagick."
+    return 1
+  fi
+fi
+if [[ ! -f "$IMAGE_FOLDER/latest.png" ]]; then
+  # Create a placeholder image until one is generated
+  "$MAGICK_COMMAND" -size 2048x256 xc:red -gravity center -pointsize 170 -fill grey -annotate +0+0 "No frieze generated yet" "$IMAGE_FOLDER/design_first.png"
+  ln -sf "$IMAGE_FOLDER/design_first.png" "$IMAGE_FOLDER/latest.png"
+fi
 
 if [[ "$COMMAND" == "generate" ]]; then
   set +m # Disable job control, so that the generate command does not produce job control messages.

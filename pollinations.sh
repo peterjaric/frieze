@@ -19,7 +19,7 @@ get_image_url() {
 
   local width=2048
   local height=256
-
-  echo "https://image.pollinations.ai/prompt/$encoded_prompt?width=$width&height=$height&private=true&model=$model&token=$POLLINATIONS_API_TOKEN"
+  local token="${POLLINATIONS_API_TOKEN:-}"
+  echo "https://image.pollinations.ai/prompt/$encoded_prompt?width=$width&height=$height&private=true&model=$model&token=$token"
 }
 
