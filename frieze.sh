@@ -95,9 +95,9 @@ generate_banner_image() {
     mkdir -p "$IMAGE_FOLDER"
     "$MAGICK_COMMAND" "$image_name" -fuzz 10% -trim +repage "$IMAGE_FOLDER/$image_name"
     ln -sf "$IMAGE_FOLDER/$image_name" "$IMAGE_FOLDER/latest.png"
+    log "Image saved to $IMAGE_FOLDER/$image_name"
   fi
 
-  log "Image saved to $IMAGE_FOLDER/$image_name"
 }
 
 display_banner_image() {

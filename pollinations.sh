@@ -1,18 +1,11 @@
 #!/bin/bash
 
-# Note that the Pollinations API does *not* require an account when using the flux model or the turbo model.
+# Register an account on https://pollinations.ai/ to get an API key, then see list of models at
+# https://enter.pollinations.ai/
 
 get_image_url() {
   local prompt="$1"
-  # No account needed for these
-  local model=flux
-  # local model=turbo
-  # Go to https://auth.pollinations.ai to get a token for this one to work. It is super slow though.
-  # local model=kontext
-
-  # New models, not tested much
-  # local model=nanobanana
-  # local model=seedream
+  local model=zimage
 
   local encoded_prompt
   encoded_prompt=$(echo "$prompt" | jq -sRr @uri)
@@ -20,6 +13,7 @@ get_image_url() {
   local width=2048
   local height=256
   local token="${POLLINATIONS_API_TOKEN:-}"
-  echo "https://image.pollinations.ai/prompt/$encoded_prompt?width=$width&height=$height&private=true&model=$model&token=$token"
+
+  echo "https://gen.pollinations.ai/image/$encoded_prompt?width=$width&height=$height&model=$model&key=$token"
 }
 
